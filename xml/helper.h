@@ -16,7 +16,7 @@ xmlNode* xmlParseFragment(void* doc, void *buffer, int buffer_len, void *url, in
 xmlNode* xmlParseFragmentAsDoc(void *doc, void *buffer, int buffer_len, void *url, void *encoding, int options, void *error_buffer, int error_buffer_len);
 int xmlSaveNode(void *wbuffer, void *node, void *encoding, int options);
 void xmlRemoveDefaultNamespace(xmlNode *node);
-xmlTextReaderPtr xmlNewReader(void *buffer, int buffer_len, void *url, void *encoding, int options, void *error_buffer, int error_buffer_len);
+xmlTextReaderPtr xmlNewReader(void * goReader, void *url, void *encoding, int options, void *error_buffer, int error_buffer_len);
 
 void xmlSetContent(void *gonode, void *node, void *content);
 

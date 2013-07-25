@@ -194,13 +194,22 @@ void xmlRemoveDefaultNamespace(xmlNode *node) {
     removeDefaultNamespace(node->ns, node);
 }
 
-xmlTextReaderPtr xmlNewReader(void *buffer, int buffer_len, void *url, void *encoding, int options, void *error_buffer, int error_buffer_len) {
-  const char *c_buffer = (char*)buffer;
+int _readerCloseCallback (void * context) {
+  printf("close!!!");
+  fflush(stdout);
+  return 0;
+}
+
+int _readerReadCallback (void * context, char * buffer, int len) {
+  return readerReadCallback(context, buffer, len);
+}
+
+xmlTextReaderPtr xmlNewReader(void * goReader, void *url, void *encoding, int options, void *error_buffer, int error_buffer_len) {
   const char *c_url = (char*)url;
   const char *c_encoding = (char*)encoding;
   xmlTextReaderPtr reader = NULL;
 
-  reader = xmlReaderForMemory(c_buffer, buffer_len, c_url, c_encoding, options);
+  reader = xmlReaderForIO(_readerReadCallback, _readerCloseCallback, goReader, c_url, c_encoding, options);
 
   if(reader == NULL) {
     xmlErrorPtr error;

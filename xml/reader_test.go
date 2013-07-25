@@ -1,18 +1,19 @@
 package xml
 
 import (
+	"strings"
 	"testing"
 )
 
 func TestReader(t *testing.T) {
-	xml := "<foo></foo>"
-	reader, err := NewReader([]byte(xml), []byte("utf-8"), nil, 0);
+	xml := strings.NewReader("<foo></foo>")
+	reader, err := NewReader(xml, []byte("utf-8"), nil, 0)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	if err := reader.Read(); err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	name := reader.Name()

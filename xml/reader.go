@@ -7,48 +7,63 @@ package xml
 import "C"
 import "fmt"
 import "io"
+import "reflect"
 
-import(
+import (
 	. "github.com/moovweb/gokogiri/util"
 	"unsafe"
 )
 
-func NewReader(content, inEncoding, url []byte, options int) (*Reader, error) {
+func NewReader(r io.Reader, inEncoding, url []byte, options int) (*Reader, error) {
 	inEncoding = AppendCStringTerminator(inEncoding)
 
-	var readerPtr C.xmlTextReaderPtr
-	contentLen := len(content)
+	var urlPtr, encodingPtr, goReaderPtr unsafe.Pointer
+	if len(url) > 0 {
+		url = AppendCStringTerminator(url)
+		urlPtr = unsafe.Pointer(&url[0])
+	}
+	if len(inEncoding) > 0 {
+		encodingPtr = unsafe.Pointer(&inEncoding[0])
+	}
 
-	if contentLen > 0 {
-		var contentPtr, urlPtr, encodingPtr unsafe.Pointer
-		contentPtr = unsafe.Pointer(&content[0])
+	reader := &Reader{r: r}
+	goReaderPtr = unsafe.Pointer(reader)
+	reader.ptr = C.xmlNewReader(goReaderPtr, urlPtr, encodingPtr, C.int(options), nil, 0)
 
-		if len(url) > 0 {
-			url = AppendCStringTerminator(url)
-			urlPtr = unsafe.Pointer(&url[0])
-		}
-		if len(inEncoding) > 0 {
-			encodingPtr = unsafe.Pointer(&inEncoding[0])
-		}
-
-		readerPtr = C.xmlNewReader(contentPtr, C.int(contentLen), urlPtr, encodingPtr, C.int(options), nil, 0)
-
-		if readerPtr == nil {
-			return nil, ERR_FAILED_TO_PARSE_XML
-		} else {
-			return &Reader{Ptr: readerPtr}, nil
-		}
+	if reader.ptr == nil {
+		return nil, ERR_FAILED_TO_PARSE_XML
 	} else {
-		panic("not done")
+		return reader, nil
 	}
 }
 
-type Reader struct{
-	Ptr C.xmlTextReaderPtr
+//export readerReadCallback
+func readerReadCallback(context unsafe.Pointer, buffer *C.char, length int) int {
+	r := (*Reader)(context)
+	h := &reflect.SliceHeader{
+		Data: uintptr(unsafe.Pointer(buffer)),
+		Len:  length,
+		Cap:  length,
+	}
+
+	buf := *(*[]byte)(unsafe.Pointer(h))
+	n, err := r.r.Read(buf)
+	if err == io.EOF {
+		return 0
+	} else if err != nil {
+		// @TODO: Can we also return the error message somehow?
+		return -1
+	}
+	return n
 }
 
-func (r *Reader) Read() (error) {
-	ret := C.xmlTextReaderRead(r.Ptr)
+type Reader struct {
+	ptr C.xmlTextReaderPtr
+	r   io.Reader
+}
+
+func (r *Reader) Read() error {
+	ret := C.xmlTextReaderRead(r.ptr)
 	if ret == 0 {
 		return io.EOF
 	} else if ret == 1 {
@@ -59,7 +74,7 @@ func (r *Reader) Read() (error) {
 }
 
 func (r *Reader) Name() string {
-	p := (*C.char)(unsafe.Pointer(C.xmlTextReaderName(r.Ptr)))
+	p := (*C.char)(unsafe.Pointer(C.xmlTextReaderName(r.ptr)))
 	defer C.xmlFreeChars(p)
 	name := C.GoString(p)
 	return name
