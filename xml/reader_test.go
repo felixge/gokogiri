@@ -32,7 +32,6 @@ func TestReader(t *testing.T) {
 
 		depth := r.Depth()
 		nodeType := r.NodeType()
-		//name := r.Name()
 
 		if nodeType == XML_ELEMENT_NODE && depth == 1 {
 			node, err := r.Expand()
