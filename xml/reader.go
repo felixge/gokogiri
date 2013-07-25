@@ -79,3 +79,18 @@ func (r *Reader) Name() string {
 	name := C.GoString(p)
 	return name
 }
+
+func (r *Reader) Depth() int {
+	return int(C.xmlTextReaderDepth(r.ptr))
+}
+
+func (r *Reader) NodeType() int {
+	return int(C.xmlTextReaderNodeType(r.ptr))
+}
+
+func (r *Reader) Expand() (Node, error) {
+	nodePtr := C.xmlTextReaderExpand(r.ptr);
+	// TODO: check nodePtr = nil
+	node := NewNode(unsafe.Pointer(nodePtr), nil)
+	return node, nil
+}

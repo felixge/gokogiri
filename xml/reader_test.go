@@ -1,23 +1,41 @@
 package xml
 
 import (
-	"strings"
+	"io"
+	"os"
 	"testing"
 )
 
 func TestReader(t *testing.T) {
-	xml := strings.NewReader("<foo></foo>")
-	reader, err := NewReader(xml, []byte("utf-8"), nil, 0)
+	file, err := os.Open("tests/reader/books.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer file.Close()
+
+	r, err := NewReader(file, DefaultEncodingBytes, nil, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if err := reader.Read(); err != nil {
-		t.Fatal(err)
-	}
+	for {
+		if err := r.Read(); err == io.EOF {
+			break
+		} else if err != nil {
+			t.Fatal(err)
+		}
 
-	name := reader.Name()
-	if name != "foo" {
-		t.Errorf("unexpected name: %s", name)
+		depth := r.Depth()
+		nodeType := r.NodeType()
+		//name := r.Name()
+
+		if nodeType == XML_ELEMENT_NODE && depth == 1 {
+			node, err := r.Expand()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			t.Logf("%#v", node.Name())
+		}
 	}
 }
