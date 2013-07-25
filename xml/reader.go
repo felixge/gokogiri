@@ -90,9 +90,11 @@ func (r *Reader) NodeType() int {
 
 func (r *Reader) Expand() (Node, error) {
 	// TODO: check nodePtr = nil
-	nodePtr := C.xmlTextReaderExpand(r.ptr);
-	// TODO: how to get the document reference
-	doc := Document(nil)
+	nodePtr := unsafe.Pointer(C.xmlTextReaderExpand(r.ptr))
+	docPtr := unsafe.Pointer(C.xmlTextReaderCurrentDoc(r.ptr))
+
+	// TODO: get the encodings from somewhere
+	doc := NewDocument(docPtr, 0, DefaultEncodingBytes, DefaultEncodingBytes)
 
 	node := NewNode(unsafe.Pointer(nodePtr), doc)
 	return node, nil
