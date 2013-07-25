@@ -89,8 +89,11 @@ func (r *Reader) NodeType() int {
 }
 
 func (r *Reader) Expand() (Node, error) {
-	nodePtr := C.xmlTextReaderExpand(r.ptr);
 	// TODO: check nodePtr = nil
-	node := NewNode(unsafe.Pointer(nodePtr), nil)
+	nodePtr := C.xmlTextReaderExpand(r.ptr);
+	// TODO: how to get the document reference
+	doc := Document(nil)
+
+	node := NewNode(unsafe.Pointer(nodePtr), doc)
 	return node, nil
 }
